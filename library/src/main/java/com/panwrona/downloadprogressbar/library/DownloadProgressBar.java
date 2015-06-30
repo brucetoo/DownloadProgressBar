@@ -1,6 +1,7 @@
 package com.panwrona.downloadprogressbar.library;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -12,6 +13,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -146,12 +148,14 @@ public class DownloadProgressBar extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        Log.e(TAG, "onSizeChanged");
 
         mCenterX = w / 2f;
         mCenterY = h / 2f;
         mPaddingX = w / 2f - mRadius;
         mPaddingY = h / 2f - mRadius;
 
+        //calculate circle progress's bounce;
         mCircleBounds = new RectF();
         mCircleBounds.top = mPaddingY;
         mCircleBounds.left = mPaddingX;
@@ -161,7 +165,10 @@ public class DownloadProgressBar extends View {
 
     private void setupAnimations() {
         mOvershootInterpolator = new OvershootInterpolator(mOvershootValue);
+
+        //Middle arrow line to dot animation
         mArrowLineToDot = ValueAnimator.ofFloat(0, mRadius / 4);
+        //update each draw frame. remember mArrowLineToDotAnimatedValue so can use in draw because of invalidate();
         mArrowLineToDot.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
@@ -170,32 +177,19 @@ public class DownloadProgressBar extends View {
             }
         });
         mArrowLineToDot.setDuration(200);
-        mArrowLineToDot.addListener(new Animator.AnimatorListener() {
+        mArrowLineToDot.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animator) {
                 mState = State.ANIMATING_LINE_TO_DOT;
                 if (mOnProgressUpdateListener != null) {
+                    //start arrow line to dot callback
                     mOnProgressUpdateListener.onAnimationStarted();
                 }
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-
             }
         });
         mArrowLineToDot.setInterpolator(new AccelerateInterpolator());
 
+        //left right arrow line to horizontal line animation
         mArrowLineToHorizontalLine = ValueAnimator.ofFloat(0, mRadius / 2);
         mArrowLineToHorizontalLine.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -204,33 +198,18 @@ public class DownloadProgressBar extends View {
                 invalidate();
             }
         });
-        mArrowLineToHorizontalLine.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animator) {
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-
-            }
-        });
+//        mArrowLineToHorizontalLine.addListener(new AnimatorListenerAdapter() {
+//
+//        });
         mArrowLineToHorizontalLine.setDuration(600);
         mArrowLineToHorizontalLine.setStartDelay(400);
         mArrowLineToHorizontalLine.setInterpolator(mOvershootInterpolator);
 
+
+        //dot move to the top of progress animation
         mDotToProgressAnimation = ValueAnimator.ofFloat(0, mRadius);
         mDotToProgressAnimation.setDuration(600);
-        mDotToProgressAnimation.setStartDelay(600);
+        mDotToProgressAnimation.setStartDelay(600);//this delay = 600 = mArrowLineToHorizontalLine's duration time
         mDotToProgressAnimation.setInterpolator(mOvershootInterpolator);
         mDotToProgressAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -239,12 +218,8 @@ public class DownloadProgressBar extends View {
                 invalidate();
             }
         });
-        mDotToProgressAnimation.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animator) {
 
-            }
-
+        mDotToProgressAnimation.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animator) {
                 if(mWhichProgress == State.ANIMATING_PROGRESS)
@@ -255,21 +230,12 @@ public class DownloadProgressBar extends View {
                 mState = mWhichProgress;
 
             }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-
-            }
         });
 
         mArrowToLineAnimatorSet = new AnimatorSet();
         mArrowToLineAnimatorSet.playTogether(mArrowLineToDot, mArrowLineToHorizontalLine, mDotToProgressAnimation);
 
+        //circle progress animation
         mProgressAnimation = ValueAnimator.ofFloat(0, 360f);
         mProgressAnimation.setStartDelay(500);
         mProgressAnimation.setInterpolator(new LinearInterpolator());
@@ -283,28 +249,16 @@ public class DownloadProgressBar extends View {
                 invalidate();
             }
         });
-        mProgressAnimation.addListener(new Animator.AnimatorListener() {
+        mProgressAnimation.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animator) {
                 mDotToProgressAnimatedValue = 0;
             }
-
-            @Override
-            public void onAnimationEnd(Animator animator) {
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-
-            }
         });
+        //In reality,this duration is less used
         mProgressAnimation.setDuration(mProgressDuration);
 
+        //Manual update the progress..the value comes from setProgress()
         mManualProgressAnimation = ValueAnimator.ofFloat(mFromArc, mToArc);
         mManualProgressAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -313,7 +267,7 @@ public class DownloadProgressBar extends View {
                 invalidate();
             }
         });
-        mManualProgressAnimation.addListener(new Animator.AnimatorListener() {
+        mManualProgressAnimation.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animator) {
                 if(mOnProgressUpdateListener != null) {
@@ -327,25 +281,17 @@ public class DownloadProgressBar extends View {
                 if(mOnProgressUpdateListener != null) {
                     mOnProgressUpdateListener.onManualProgressEnded();
                 }
+
+                //run mCollapseAnimation
                 if(mToArc > 359) {
                     mCollapseAnimation.start();
                 }
 
             }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-
-            }
         });
 
 
-
+       //expand middle progress animation -- start time
         mExpandAnimation = ValueAnimator.ofFloat(0, mRadius / 6);
         mExpandAnimation.setDuration(300);
         mExpandAnimation.setInterpolator(new DecelerateInterpolator());
@@ -357,15 +303,11 @@ public class DownloadProgressBar extends View {
             }
         });
 
+        //collapse middle progress animation -- end time
         mCollapseAnimation = ValueAnimator.ofFloat(mRadius / 6, mStrokeWidth / 2);
         mCollapseAnimation.setDuration(300);
         mCollapseAnimation.setStartDelay(300);
-        mCollapseAnimation.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animator) {
-
-            }
-
+        mCollapseAnimation.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animator) {
                 if(mState == State.ANIMATING_MANUAL_PROGRESS) {
@@ -376,16 +318,6 @@ public class DownloadProgressBar extends View {
                     }
                 }
             }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-
-            }
         });
         mCollapseAnimation.setInterpolator(new AccelerateDecelerateInterpolator());
         mCollapseAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -395,16 +327,15 @@ public class DownloadProgressBar extends View {
                 invalidate();
             }
         });
+
+        //Manual progress animation set include expand and progress animation
         mManualProgressAnimationSet = new AnimatorSet();
         mManualProgressAnimationSet.playSequentially(mExpandAnimation, mManualProgressAnimation);
 
+
+        //this can be ignored ?
         mProgressAnimationSet = new AnimatorSet();
-        mProgressAnimationSet.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
+        mProgressAnimationSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 if (mResultState == State.ANIMATING_ERROR) {
@@ -413,21 +344,11 @@ public class DownloadProgressBar extends View {
                     mSuccessAnimation.start();
                 }
             }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
         });
         mProgressAnimationSet.playSequentially(mExpandAnimation, mProgressAnimation, mCollapseAnimation);
 
         mErrorAnimation = ValueAnimator.ofFloat(0, mRadius / 4);
-        mErrorAnimation.setDuration(600);
+        mErrorAnimation.setDuration(4000);
         mErrorAnimation.setStartDelay(500);
         mErrorAnimation.setInterpolator(new AccelerateDecelerateInterpolator());
         mErrorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -437,7 +358,7 @@ public class DownloadProgressBar extends View {
                 invalidate();
             }
         });
-        mErrorAnimation.addListener(new Animator.AnimatorListener() {
+        mErrorAnimation.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animator) {
                 mState = State.ANIMATING_ERROR;
@@ -461,16 +382,6 @@ public class DownloadProgressBar extends View {
                     }
                 }, mResultDuration);
             }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-
-            }
         });
 
         mSuccessAnimation = ValueAnimator.ofFloat(0, mRadius / 4);
@@ -484,7 +395,7 @@ public class DownloadProgressBar extends View {
                 invalidate();
             }
         });
-        mSuccessAnimation.addListener(new Animator.AnimatorListener() {
+        mSuccessAnimation.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animator) {
                 mState = State.ANIMATING_SUCCESS;
@@ -507,16 +418,6 @@ public class DownloadProgressBar extends View {
                     }
                 }, mResultDuration);
             }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-
-            }
         });
 
     }
@@ -532,15 +433,20 @@ public class DownloadProgressBar extends View {
     }
 
     private void drawing(Canvas canvas) {
+        //draw normal circle progress at first time
         canvas.drawCircle(mCenterX, mCenterY, mRadius, mCirclePaint);
         switch (mState) {
             case IDLE:
+                //draw vertical line of arrow
                 canvas.drawLine(mCenterX, mCenterY - mRadius / 2, mCenterX, mCenterY + mRadius / 2, mDrawingPaint);
+                //draw left line of arrow
                 canvas.drawLine(mCenterX - mRadius / 2, mCenterY, mCenterX, mCenterY + mRadius / 2, mDrawingPaint);
+                //draw right line of arrow
                 canvas.drawLine(mCenterX, mCenterY + mRadius / 2, mCenterX + mRadius / 2, mCenterY, mDrawingPaint);
                 break;
             case ANIMATING_LINE_TO_DOT:
-                if (!mDotToProgressAnimation.isRunning()) {
+                if (!mDotToProgressAnimation.isRunning()) { //in case dot is visible when dot to progress top place animation starting
+                    //draw line, separate from top and bottom of line.pivot is center
                     canvas.drawLine(
                             mCenterX,
                             mCenterY - mRadius / 2 + mArrowLineToDotAnimatedValue * 2 - mStrokeWidth / 2,
@@ -565,17 +471,20 @@ public class DownloadProgressBar extends View {
                 );
                 break;
             case ANIMATING_PROGRESS:
+                //just so accurate to calculate progress value,but the below one is ok too.
                 float progress = ((mCenterX + mRadius / 2 + mArrowLineToHorizontalLineAnimatedValue / 2) - (mCenterX - mRadius / 2 - mArrowLineToHorizontalLineAnimatedValue / 2)) / 360f;
-
+//             float progress = (mCenterX + mRadius/2)/ 360;
                 mDrawingPaint.setStrokeWidth(mStrokeWidth);
                 canvas.drawArc(mCircleBounds, -90, mCurrentGlobalProgressValue, false, mDrawingPaint);
 
+                //the whole horizontal progress bounds of round rect. it's value is stable - for more accurate needs be changeable
                 mProgressBackgroundBounds.left = mCenterX - mRadius / 2 - mArrowLineToHorizontalLineAnimatedValue / 2;
                 mProgressBackgroundBounds.top = mCenterY - mExpandCollapseValue;
                 mProgressBackgroundBounds.right =  mCenterX + mRadius / 2 + mArrowLineToHorizontalLineAnimatedValue / 2;
                 mProgressBackgroundBounds.bottom = mCenterY + mExpandCollapseValue;
                 canvas.drawRoundRect(mProgressBackgroundBounds, 45, 45, mProgressBackgroundPaint);
 
+                //the progressing horizontal bounds is changeable
                 mProgressBounds.left = mCenterX - mRadius / 2 - mArrowLineToHorizontalLineAnimatedValue / 2;
                 mProgressBounds.top = mCenterY - mExpandCollapseValue;
                 mProgressBounds.right = mCenterX - mRadius / 2 - mArrowLineToHorizontalLineAnimatedValue / 2 + progress * mCurrentGlobalProgressValue;
@@ -661,6 +570,7 @@ public class DownloadProgressBar extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        Log.e(TAG, "onDraw");
         drawing(canvas);
     }
 

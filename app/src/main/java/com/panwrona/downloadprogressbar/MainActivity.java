@@ -8,8 +8,6 @@ import android.widget.TextView;
 
 import com.panwrona.downloadprogressbar.library.DownloadProgressBar;
 
-import java.util.Random;
-
 public class MainActivity extends AppCompatActivity {
 
     private int val = 0;
@@ -25,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 val = val + 10;
                 downloadProgressView.setProgress(val);
+                if(val >= 80){
+                    downloadProgressView.setErrorResultState();
+                }
             }
         });
         Typeface robotoFont=Typeface.createFromAsset(getAssets(), "fonts/Roboto-Light.ttf");

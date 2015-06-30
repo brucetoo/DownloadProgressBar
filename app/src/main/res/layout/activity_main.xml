@@ -9,13 +9,13 @@
 
     <com.panwrona.downloadprogressbar.library.DownloadProgressBar
         android:id="@+id/dpv3"
-        android:layout_width="140dp"
-        android:layout_height="140dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:layout_gravity="center"
         android:layout_marginTop="100dp"
-        dpv:circleBackgroundColor="@color/red_light_primary_color"
-        dpv:progressBackgroundColor="@color/red_light_primary_color"
-        dpv:progressColor="@color/red_text_icon_color"
+        dpv:circleBackgroundColor="@color/material_blue_grey_950"
+        dpv:progressBackgroundColor="@color/material_deep_teal_500"
+        dpv:progressColor="@color/button_material_dark"
         dpv:drawingColor="@color/red_text_icon_color"
         dpv:progressDuration="2000"
         dpv:resultDuration="5000"
