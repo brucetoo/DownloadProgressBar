@@ -385,7 +385,7 @@ public class DownloadProgressBar extends View {
         });
 
         mSuccessAnimation = ValueAnimator.ofFloat(0, mRadius / 4);
-        mSuccessAnimation.setDuration(600);
+        mSuccessAnimation.setDuration(3000);
         mSuccessAnimation.setStartDelay(500);
         mSuccessAnimation.setInterpolator(new AccelerateDecelerateInterpolator());
         mSuccessAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -512,6 +512,9 @@ public class DownloadProgressBar extends View {
             case ANIMATING_SUCCESS:
                 mDrawingPaint.setStrokeWidth(mLineWidth);
                 canvas.drawArc(mCircleBounds, 0, 360, false, mDrawingPaint);
+                /**
+                 * 此算法 有点没懂
+                 */
                 canvas.drawLine(
                         mCenterX - mRadius / 2 + mSuccessValue * 2 - mSuccessValue / (float) Math.sqrt(2f) / 2,
                         mCenterY + mSuccessValue,
@@ -531,6 +534,11 @@ public class DownloadProgressBar extends View {
                 mDrawingPaint.setStrokeWidth(mLineWidth);
                 canvas.drawArc(mCircleBounds, 0, 360, false, mDrawingPaint);
 
+                /**
+                 * draw line left_bottom to right_top
+                 * 可以知道mErrorValue值是0 - mRadius/4的距离，根据每个点
+                 * 的开始和结束位置，设置最大和最小值，再每一帧增加值 使变化变得更流畅
+                 */
                 canvas.drawLine(
                         mCenterX - mRadius / 2 - mRadius / 4 + mErrorValue * 2,
                         mCenterY + mErrorValue,
@@ -538,6 +546,9 @@ public class DownloadProgressBar extends View {
                         mCenterY - mErrorValue,
                         mDrawingPaint
                 );
+                /**
+                 * draw line right_bottom to left_top
+                 */
                 canvas.drawLine(
                         mCenterX - mErrorValue,
                         mCenterY - mErrorValue,

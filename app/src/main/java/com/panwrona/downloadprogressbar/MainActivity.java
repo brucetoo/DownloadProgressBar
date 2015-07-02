@@ -23,9 +23,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 val = val + 10;
                 downloadProgressView.setProgress(val);
-                if(val >= 80){
-                    downloadProgressView.setErrorResultState();
-                }
+//                if(val >= 80){
+//                    downloadProgressView.setErrorResultState();
+//                }
             }
         });
         Typeface robotoFont=Typeface.createFromAsset(getAssets(), "fonts/Roboto-Light.ttf");
